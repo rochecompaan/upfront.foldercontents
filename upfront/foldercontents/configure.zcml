@@ -1,0 +1,39 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
+    xmlns:five="http://namespaces.zope.org/five"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
+    i18n_domain="plone">
+
+    <!-- Include configuration for dependencies listed in setup.py -->
+    <includeDependencies package="." />
+
+    <!-- Register --> 
+    <five:registerPackage package="." />
+
+    <adapter
+        for="Products.CMFCore.interfaces.IFolderish"
+        provides=".interfaces.IFolderContents"
+        factory=".adapters.FolderContents"
+        />
+
+    <!-- Event handlers -->
+    <subscriber
+        for="Products.CMFCore.interfaces.IContentish
+            zope.app.container.interfaces.IObjectMovedEvent"
+        handler=".eventhandlers.onObjectMoved"
+        /> 
+
+    <subscriber
+        for="Products.CMFCore.interfaces.IContentish
+            Products.DCWorkflow.interfaces.IAfterTransitionEvent"
+        handler=".eventhandlers.afterTransition"
+        /> 
+
+    <subscriber
+        for="Products.CMFCore.interfaces.IContentish
+            zope.lifecycleevent.interfaces.IObjectModifiedEvent"
+        handler=".eventhandlers.onObjectModified"
+        />
+
+</configure>

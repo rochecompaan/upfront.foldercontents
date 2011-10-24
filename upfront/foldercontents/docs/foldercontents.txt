@@ -1,0 +1,96 @@
+Create a folder.
+
+  >>> self.loginAsPortalOwner()
+  >>> self.portal.invokeFactory('Folder', 'a-folder')
+  'a-folder'
+  >>> folder = self.portal['a-folder']
+  >>> from Products.CMFCore.interfaces import IFolderish
+  >>> IFolderish.providedBy(folder)
+  True
+
+This folder must be adaptable by IFolderContents.
+
+  >>> from upfront.foldercontents.interfaces import IFolderContents
+  >>> IFolderContents(folder)
+  <upfront.foldercontents.adapters.FolderContents object ...>
+
+Create a document in folder.
+
+  >>> folder.invokeFactory('Document', 'doc-one')
+  'doc-one'
+
+The document id is returned by IFolderContents.contentIds.
+
+  >>> IFolderContents(folder).contentIds()
+  ['doc-one']
+
+The document itself is returned by IFolderContents.contents.
+
+  >>> IFolderContents(folder).contents()
+  [<ATDocument at /plone/a-folder/doc-one>]
+
+
+Check that the folder is private.
+
+  >>> self.portal.portal_workflow.getInfoFor(folder['doc-one'], 'review_state')
+  'private'
+
+Create another document in folder but also publish it.  
+
+  >>> folder.invokeFactory('Document', 'doc-two')
+  'doc-two'
+  >>> self.portal.portal_workflow.doActionFor(folder['doc-two'], 'publish')
+
+Both documents are returned by IFolderContents.contents.
+
+  >>> res = IFolderContents(folder).contentIds()
+  >>> res.sort()
+  >>> res
+  ['doc-one', 'doc-two']
+
+Login a a normal member. This member may not see doc-one. The
+allowedRolesAndUsers index on the folder filters out results depending on the
+roles that the authenticated member have.  
+
+  >>> self.login('member1')
+  >>> IFolderContents(folder).contents()
+  [<ATDocument at /plone/a-folder/doc-two>]
+
+The adapter returns the correct results after a document is renamed. We must
+create a savepoint for the Copy or Move permission to be set.
+
+  >>> import transaction
+  >>> transaction.savepoint(optimistic=True)
+  <transaction._transaction.Savepoint instance ...>
+  >>> self.loginAsPortalOwner()
+  >>> folder.manage_renameObject('doc-one', 'doc-first')
+  >>> res = IFolderContents(folder).contentIds()
+  >>> res.sort()
+  >>> res
+  ['doc-first', 'doc-two']
+
+Delete a document. The adapter returns only one document.
+
+  >>> folder.manage_delObjects(ids=['doc-first'])
+  >>> IFolderContents(folder).contents()
+  [<ATDocument at /plone/a-folder/doc-two>]
+
+Move the remaining doc-two to a new folder. The adapter returns an empty list
+for the original folder and doc-two for the new folder.
+
+  >>> self.portal.invokeFactory('Folder', 'new-folder')
+  'new-folder'
+  >>> newfolder = self.portal['new-folder']
+  >>> cp = folder.manage_cutObjects(['doc-two'])
+  >>> dontcare = newfolder.manage_pasteObjects(cp)
+  >>> IFolderContents(folder).contents()
+  []
+  >>> IFolderContents(newfolder).contents()
+  [<ATDocument at /plone/new-folder/doc-two>]
+
+Let's check if copying trees works as expected. Copy new-folder into a-folder. 
+
+  >>> cp = self.portal.manage_copyObjects(['new-folder'])
+  >>> dontcare = folder.manage_pasteObjects(cp)
+  >>> IFolderContents(folder).contents()
+  [<ATFolder at /plone/a-folder/new-folder>]

@@ -1,0 +1,24 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:five="http://namespaces.zope.org/five"
+    i18n_domain="upfront.diet">
+
+    <!-- Folder contents view -->
+    <configure package="plone.app.content.browser">
+    <browser:page
+        for="*"
+        class="upfront.foldercontents.foldercontents.FolderContentsView"
+        name="folder_contents"
+        template="folder_contents.pt"
+        permission="cmf.ListFolderContents" /> 
+    </configure>
+
+    <browser:page
+        for="*"
+        class=".foldercontents.FolderContentsKSSView"
+        attribute="update_table"
+        name="foldercontents_update_table"
+        permission="cmf.ListFolderContents" />
+
+</configure>

@@ -1,0 +1,3 @@
+1. UI to configure blacklists
+2. Purge blacklist on re-run of GS profile.
+3. Fix ATReferenceBrowser when viewing a field. It uses the catalog. Edit is fine.
